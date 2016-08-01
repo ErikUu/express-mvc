@@ -7,7 +7,8 @@ var gulp        = require('gulp'),
     del         = require("del"),
     concat      = require("gulp-concat"),
     uglify      = require("gulp-uglify"),
-    rename      = require("gulp-rename");
+    rename      = require("gulp-rename"),
+    webpack     = require('gulp-webpack');
 
 //Compile sass
 gulp.task('sass', function () {
@@ -18,34 +19,22 @@ gulp.task('sass', function () {
     .pipe(livereload());
 });
 
-//Concat and map scripts
-gulp.task("concatScripts" ,function () {
-  return gulp.src(["./public/js/**/*.js", "!./public/js/**/main*.js*"])
-    .pipe(plumber())
-    .pipe(maps.init())
-    .pipe(concat("main.js"))
-    .pipe(maps.write("/."))
-    .pipe(gulp.dest("./public/js"))
-    .pipe(livereload());
-});
-
-//Minify scripts
-gulp.task("minifyScripts", ["concatScripts"], function () {
-  return gulp.src("./public/js/main.js")
-    .pipe(uglify())
-    .pipe(rename("main.min.js"))
-    .pipe(gulp.dest("./public/js/mini/"));
+// webpack
+gulp.task('webpack', function() {
+    return gulp.src('public/js/scripts.js')
+        .pipe(webpack(require('./config/webpack.config.js')))
+        .pipe(gulp.dest('public/js/'));
 });
 
 //Remove dist folder and all compiled/minified files
 gulp.task("clean", function () {
-  del(["./public/styles/main.css*", "./public/js/main*.js*", "./public/js/mini"]);
+  del(["./public/styles/main.css*", "./public/js/main*.js*", "./public/js/scripts.min.js", './public/components']);
 });
 
-//Watch sass files for changes
+//Watch sass files for changes´
 gulp.task('watch', function() {
   gulp.watch('./public/styles/**/*.scss', ['sass']);
-  gulp.watch('./public/js/**/*.js', ['concatScripts']);
+  gulp.watch('./public/js/**/*.js', ['webpack']);
 });
 
 //Live reload
@@ -70,7 +59,7 @@ gulp.task('develop', function () {
 gulp.task('default', [
   'clean',
   'sass',
-  'minifyScripts',
+  'webpack',
   'develop',
   'watch'
 ]);
